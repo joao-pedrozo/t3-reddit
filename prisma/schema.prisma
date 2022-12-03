@@ -48,13 +48,40 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
+  id                 String      @id @default(cuid())
+  name               String?
+  email              String?     @unique
+  emailVerified      DateTime?
+  image              String?
+  accounts           Account[]
+  sessions           Session[]
+  posts              Post[]
+  communities        Community[] @relation("communityMembers")
+  createdCommunities Community[] @relation("communityCreator")
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  title       String
+  content     String
+  author      User       @relation(fields: [authorId], references: [id])
+  authorId    String
+  community   Community? @relation(fields: [communityId], references: [id])
+  communityId String?
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String   @unique
+  description String?
+  posts       Post[]
+  members     User[]   @relation("communityMembers")
+  creator     User     @relation("communityCreator", fields: [creatorId], references: [id])
+  creatorId   String
 }
 
 model VerificationToken {
