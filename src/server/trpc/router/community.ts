@@ -90,4 +90,15 @@ export const communityRouter = router({
         },
       });
     }),
+  getSubscribedCommunities: protectedProcedure.query(({ ctx }) => {
+    return ctx.prisma.community.findMany({
+      where: {
+        members: {
+          some: {
+            id: ctx.session.user.id,
+          },
+        },
+      },
+    });
+  }),
 });
