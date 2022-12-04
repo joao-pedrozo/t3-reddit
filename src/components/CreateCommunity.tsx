@@ -1,7 +1,13 @@
 import { trpc } from '../utils/trpc';
 
 const CreateCommunity = () => {
-  const createPost = trpc.community.createCommunity.useMutation();
+  const utils = trpc.useContext();
+
+  const createPost = trpc.community.createCommunity.useMutation({
+    onSuccess: () => {
+      utils.community.getAllCommunities.invalidate();
+    },
+  });
 
   const onFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

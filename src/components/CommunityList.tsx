@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { trpc } from '../utils/trpc';
 
 const CommunityList = () => {
+  const utils = trpc.useContext();
+
   const userSession = trpc.auth.getSession.useQuery();
 
   const communities = trpc.community.getAllCommunities.useQuery();
@@ -9,6 +11,7 @@ const CommunityList = () => {
   const subscribeToCommunity = trpc.community.subscribeToCommunity.useMutation({
     onSuccess: () => {
       communities.refetch();
+      utils.post.timeline.invalidate();
     },
   });
 
@@ -25,7 +28,7 @@ const CommunityList = () => {
               <h1>{community.name}</h1>
               <p>{community.description}</p>
             </Link>
-            {community.members.some(
+            {!community.members.some(
               (community) => community.id === userSession.data?.user?.id
             ) && (
               <button
