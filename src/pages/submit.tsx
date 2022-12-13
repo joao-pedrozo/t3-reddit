@@ -1,14 +1,21 @@
 import { type NextPage } from 'next';
 
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
-import Select, { type StylesConfig } from 'react-select';
+import { type ChangeEvent, useEffect, useState } from 'react';
+
+import Select, { type StylesConfig, type OnChangeValue } from 'react-select';
+import TitleInput from '../components/TitleInput';
 
 import { trpc } from '../utils/trpc';
 
-interface SelectOption {
+interface SelectOptionType {
   label: string;
-  options: Array<{ label: string; value: string }>;
+  options: Array<OptionType>;
+}
+
+interface OptionType {
+  value: string;
+  label: string;
 }
 
 const selectStyles: StylesConfig = {
@@ -45,29 +52,34 @@ const selectStyles: StylesConfig = {
       color: '#fff',
       backgroundColor: '#1A1A1B',
       '&:hover': {
-        borderColor: 'red',
+        backgroundColor: 'gray',
       },
+      cursor: 'pointer',
     };
   },
 };
 
 const SubmitPage: NextPage = () => {
-  const [communitiesOptions, setCommunitiesOptions] = useState<SelectOption[]>(
-    []
-  );
+  const [communitiesOptions, setCommunitiesOptions] = useState<
+    SelectOptionType[]
+  >([]);
+
+  const [selectedOption, setSelectedOption] = useState<OptionType | null>(null);
+
+  const [title, setTitle] = useState('');
+
+  const [text, setText] = useState('');
 
   const { data: sessionData } = useSession();
 
-  // const createPost = trpc.post.createPost.useMutation({
-  //   onSuccess: (asd) => {},
-  // });
-
   const communities = trpc.community.getSubscribedCommunities.useQuery();
 
+  const createPost = trpc.post.createPost.useMutation();
+
   useEffect(() => {
-    if (communities.data) {
+    if (communities.data && sessionData?.user?.name) {
       const communitiesOptions = communities.data.map((community) => ({
-        label: `/r/${community.name}`,
+        label: `r/${community.name}`,
         value: community.id,
       }));
 
@@ -75,7 +87,10 @@ const SubmitPage: NextPage = () => {
         {
           label: 'Your profile',
           options: [
-            { value: 'chocolate', label: `u/${sessionData?.user?.name}` },
+            {
+              value: sessionData?.user?.name,
+              label: `u/${sessionData?.user?.name}`,
+            },
           ],
         },
         {
@@ -85,6 +100,34 @@ const SubmitPage: NextPage = () => {
       ]);
     }
   }, [communities.data]);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  };
+
+  const handleTextAreaChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value);
+  };
+
+  const onSelectChange = (option: unknown) => {
+    setSelectedOption(option as OptionType);
+  };
+
+  const isButtonDisabled = !title || !text || !selectedOption;
+
+  const onPostButtonClick = () => {
+    if (isButtonDisabled) {
+      return;
+    }
+
+    const isPostForCommunity = selectedOption.label.startsWith('r/');
+
+    createPost.mutate({
+      title,
+      content: text,
+      communityId: isPostForCommunity ? selectedOption.value : undefined,
+    });
+  };
 
   return (
     <div className="h-full min-h-screen bg-black">
@@ -101,21 +144,24 @@ const SubmitPage: NextPage = () => {
             styles={selectStyles}
             isLoading={communities.isLoading}
             placeholder="Select a community"
-            isDisabled={communities.isLoading}
+            isDisabled={communities.isLoading || !sessionData?.user}
+            onChange={onSelectChange}
           />
-          <div className="flex w-full flex-col gap-3 bg-gray-700 p-4">
-            <input
-              type="text"
-              className="w-full rounded-md border border-white border-opacity-25 bg-transparent p-2"
-              placeholder="Title"
-            />
+          <div className="flex w-full flex-col gap-3 bg-[#1A1A1B] p-4">
+            <TitleInput onChange={handleInputChange} value={title} />
             <textarea
-              className="min-h-[150px] w-full rounded-md border border-white border-opacity-25 bg-transparent p-2"
+              className="min-h-[150px] w-full rounded-md border border-white border-opacity-25 bg-transparent p-2 text-white"
               placeholder="Text"
+              onChange={handleTextAreaChange}
+              value={text}
             />
             <hr className="my-2 border-white border-opacity-25" />
             <div className="flex w-full justify-end">
-              <button className="rounded-2xl bg-gray-200 px-4 py-2 font-bold text-black">
+              <button
+                disabled={isButtonDisabled}
+                className="rounded-2xl bg-gray-200 px-4 py-2 font-bold text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-20"
+                onClick={onPostButtonClick}
+              >
                 Post
               </button>
             </div>
