@@ -50,4 +50,13 @@ export const postRouter = router({
       },
     });
   }),
+  findPostById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(({ input, ctx }) => {
+      return ctx.prisma.post.findUnique({
+        where: {
+          id: input.id,
+        },
+      });
+    }),
 });

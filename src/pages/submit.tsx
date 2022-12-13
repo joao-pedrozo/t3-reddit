@@ -3,7 +3,7 @@ import { type NextPage } from 'next';
 import { useSession } from 'next-auth/react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 
-import Select, { type StylesConfig, type OnChangeValue } from 'react-select';
+import Select, { type StylesConfig } from 'react-select';
 import TitleInput from '../components/TitleInput';
 
 import { trpc } from '../utils/trpc';

@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
-import CreatePost from '../../components/CreatePost';
-import { trpc } from '../../utils/trpc';
+import CreatePost from '../../../components/CreatePost';
+import { trpc } from '../../../utils/trpc';
 
 const CommunityPage = () => {
   const router = useRouter();
